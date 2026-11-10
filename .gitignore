@@ -1,0 +1,33 @@
+
+# Maven
+target/
+
+# Java compiled files
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python / EDA
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+
+# Datasets
+data/raw/
+data/processed/
+
+# Generated models
+models/
+
+# Experiment results
+results/
+
+# Logs
+*.log
