@@ -46,4 +46,25 @@ public class DataLoader {
         }
     }
 
+
+    // Method load dataset
+    public static Instances loadDataset(String filePath) throws Exception{
+        File file = new File(filePath);             // create a file represents for the file csv 
+
+        // check if a file path exists
+        if(!file.exists()){
+            throw new Exception("Dataset file not found: " + filePath);
+        }
+
+        CSVLoader loader = new CSVLoader();         // create a object that read the file csv
+
+        loader.setSource(file);             // pass the file to the loader
+
+        Instances dataset = loader.getDataSet();        // Read the file
+
+        System.out.println("Dataset loaded successfully");
+    
+        return dataset;
+    }
+
 }
