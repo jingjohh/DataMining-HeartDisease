@@ -26,14 +26,6 @@ public class DataLoader {
             // Attribute information
             printAttributeInfo(dataset);
 
-            // Numerical analysis
-            printNumericalAnalysis(dataset);
-
-            // Categorical analysis
-            printCategoricalAnalysis(dataset);
-
-            // Target analysis
-            printTargetAnalysis(dataset);
 
         } catch (Exception e){
             System.out.println("Error: Unable to analyze dataset");
@@ -109,42 +101,6 @@ public class DataLoader {
             }
             
             System.out.printf("%-25s | %-12s | %s%n", attribute.name(), type, role);
-        }
-    }
-
-
-    // Numerical Analysis
-    public static void printNumericalAnalysis(Instances dataset){
-        
-        System.out.println("\n--- NUMERICAL ANALYSIS ---");
-
-        for (int i = 0; i < dataset.numAttributes(); i++){
-            
-            Attribute attribute = dataset.attribute(i);
-
-            // check if attribute is Numeric
-            if (!attribute.isNumeric()){
-                continue;
-            }
-
-            AttributeStats stats = dataset.attributeStats(i);
-
-            System.out.println("\nAttribute: " + attribute.name());
-
-            // Count number of instances in attribute
-            System.out.println("Count: " + (dataset.numInstances() - stats.missingCount));
-
-            // Calculate mean of attribute
-            System.out.printf("Mean: %.3f%n",stats.numericStats.mean);
-
-            // Calculate standard deviation of attribute
-            System.out.printf("Standard Deviation: %.3f%n",stats.numericStats.stdDev);
-
-            // Calculate min  
-            System.out.printf("Minimum: %.3f%n",stats.numericStats.min);
-
-            // Calculate max
-            System.out.printf("Maximum: %.3f%n",stats.numericStats.max);
         }
     }
 
