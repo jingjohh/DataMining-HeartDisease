@@ -2,7 +2,6 @@ package heartdisease.Preprocessing;
 
 import weka.core.Attribute;
 import weka.core.AttributeStats;
-import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.CSVLoader;
 import java.io.File;
@@ -82,7 +81,7 @@ public class DataLoader {
     // Attribute information
     public static void printAttributeInfo(Instances dataset){
 
-        System.out.println("--- ATTRIBUTE INFORMATION");
+        System.out.println("\n--- ATTRIBUTE INFORMATION");
 
         for (int i = 0; i < dataset.numAttributes(); i++){
             
@@ -120,7 +119,7 @@ public class DataLoader {
     // Numerical Analysis
     public static void printNumericalAnalysis(Instances dataset){
         
-        System.out.println("--- NUMERICAL ANALYSIS ---");
+        System.out.println("\n--- NUMERICAL ANALYSIS ---");
 
         for (int i = 0; i < dataset.numAttributes(); i++){
             
@@ -155,7 +154,7 @@ public class DataLoader {
     // Categorical analysis
     public static void printCategoricalAnalysis(Instances dataset){
         
-        System.out.println("--- CATEGORICAL ANALYSIS ---");
+        System.out.println("\n--- CATEGORICAL ANALYSIS ---");
 
         for (int i = 0; i < dataset.numAttributes(); i++){
             
@@ -185,7 +184,7 @@ public class DataLoader {
     //Missing value
     public static void printMissingValue(Instances dataset){
 
-        System.out.println("--- MISSING VALUE SUMMARY ---");
+        System.out.println("\n--- MISSING VALUE SUMMARY ---");
 
         int totalMissing = 0;
 
