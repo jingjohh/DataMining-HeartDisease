@@ -10,6 +10,8 @@ import weka.core.AttributeStats;
 
 public class EDA {
 
+    private static final String TARGET_ATTRIBUTE = "Heart Disease Status";
+
     // Find Missing value
     public static void printMissingValues(Instances dataset){
         System.out.println("\n--- MISSING VALUE ANALYSIS ---");
@@ -132,32 +134,6 @@ public class EDA {
                         + values.get(middle)) / 2.0;
             }
 
-            // Calculate Q1
-            double q1;
-            int lowerSize = middle;
-
-            if (lowerSize % 2 == 1){
-                q1 = values.get(lowerSize / 2);
-            } else {
-                q1 = (values.get(lowerSize / 2 - 1)
-                        + values.get(lowerSize / 2)) / 2.0;
-            }
-
-            // Calculate Q3
-            double q3;
-            int upperStart = (count + 1) / 2;
-            int upperSize = count - upperStart;
-
-            if (upperSize % 2 == 1){
-                q3 = values.get(upperStart + upperSize / 2);
-            } else {
-                q3 = (values.get(upperStart + upperSize / 2 - 1)
-                        + values.get(upperStart + upperSize / 2)) / 2.0;
-            }
-
-            // Calculate IQR
-            double iqr = q3 - q1;
-
             System.out.println("\nAttribute: " + attribute.name());
             System.out.println("Count: " + count);
             
@@ -168,9 +144,6 @@ public class EDA {
             System.out.printf("Minimum: %.3f%n", stats.numericStats.min);
             System.out.printf("Maximum: %.3f%n", stats.numericStats.max);
             
-            System.out.printf("Q1 (25%%): %.3f%n", q1);
-            System.out.printf("Q3 (75%%): %.3f%n", q3);
-            System.out.printf("IQR: %.3f%n", iqr);
         }
     }
 
@@ -206,6 +179,7 @@ public class EDA {
 
     // Target analysis
     public static void printTargetAnalysis(Instances dataset){
+
 
         System.out.println("\n--- TARGET ANALYSIS ---");
 
@@ -284,4 +258,98 @@ public class EDA {
         }
         
     }
+
+    // Outlier
+
+    public static void printOutlierAnalysis(Instances dataset){
+
+        System.out.println("\n--- OUTLIER ANALYSIS ---");
+
+        for (int i = 0; i < dataset.numAttributes(); i++){
+
+            Attribute attribute = dataset.attribute(i);
+
+            // Only analyze numerical attributes
+            if (!attribute.isNumeric()){
+                continue;
+            }
+
+            ArrayList<Double> values = new ArrayList<>();
+
+            // Collect valid values
+            for (int j = 0; j < dataset.numInstances(); j++){
+
+                if (!dataset.instance(j).isMissing(i)){
+                    values.add(dataset.instance(j).value(i));
+                }
+            }
+
+            Collections.sort(values);
+
+            int count = values.size();
+
+            if (count < 2){
+                System.out.println("\nAttribute: " + attribute.name());
+                System.out.println("Not enough valid values");
+                continue;
+            }
+
+            // Calculate Q1 and Q3 using median of halves
+            int middle = count / 2;
+
+            int upperStart = (count + 1) / 2;
+
+            double q1;
+            int lowerSize = middle;
+
+            if (lowerSize % 2 == 1){
+                q1 = values.get(lowerSize / 2);
+            } else if (lowerSize > 0){
+                q1 = (values.get(lowerSize / 2 - 1)
+                        + values.get(lowerSize / 2)) / 2.0;
+            } else {
+                q1 = values.get(0);
+            }
+
+            int upperSize = count - upperStart;
+
+            double q3;
+
+            if (upperSize % 2 == 1){
+                q3 = values.get(upperStart + upperSize / 2);
+            } else {
+                q3 = (values.get(upperStart + upperSize / 2 - 1)
+                        + values.get(upperStart + upperSize / 2)) / 2.0;
+            }
+
+            // Calculate IQR and boundaries
+            double iqr = q3 - q1;
+
+            double lowerBound = q1 - 1.5 * iqr;
+            double upperBound = q3 + 1.5 * iqr;
+
+            int outlierCount = 0;
+
+            // Count outliers
+            for (double value : values){
+
+                if (value < lowerBound || value > upperBound){
+                    outlierCount++;
+                }
+            }
+
+            double outlierPercentage =
+                    (double) outlierCount / count * 100;
+
+            System.out.println("\nAttribute: " + attribute.name());
+            System.out.printf("Q1: %.3f%n", q1);
+            System.out.printf("Q3: %.3f%n", q3);
+            System.out.printf("IQR: %.3f%n", iqr);
+            System.out.printf("Lower Bound: %.3f%n", lowerBound);
+            System.out.printf("Upper Bound: %.3f%n", upperBound);
+            System.out.println("Outlier Count: " + outlierCount);
+            System.out.printf("Outlier Rate: %.2f%%%n", outlierPercentage);
+        }
+    }
+
 }
