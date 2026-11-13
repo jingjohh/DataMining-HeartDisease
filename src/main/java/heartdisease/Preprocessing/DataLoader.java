@@ -151,4 +151,34 @@ public class DataLoader {
             System.out.printf("Maximum: %.3f%n",stats.numericStats.max);
         }
     }
+
+    // Categorical analysis
+    public static void printCategoricalAnalysis(Instances dataset){
+        
+        System.out.println("--- CATEGORICAL ANALYSIS ---");
+
+        for (int i = 0; i < dataset.numAttributes(); i++){
+            
+            Attribute attribute = dataset.attribute(i);      // current attribute
+
+            // check if attribute is Nomial
+            if (!attribute.isNominal()){
+                continue;
+            }
+
+            AttributeStats stats = dataset.attributeStats(i);       // retrieve statistics for attribute
+
+            System.out.println("\nAttribute: " + attribute.name());
+
+            // iterate values of Nominal attribute
+            for (int j = 0; j < attribute.numValues(); j++){
+
+                String value = attribute.value(j);          // current value Nominal
+
+                int count = stats.nominalCounts[j];         // count values
+
+                System.out.printf("%-15s : %d%n", value, count);
+            }
+        }
+    }
 }
