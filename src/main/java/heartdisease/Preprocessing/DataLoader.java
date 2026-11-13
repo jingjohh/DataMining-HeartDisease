@@ -1,7 +1,6 @@
 package heartdisease.Preprocessing;
 
 import weka.core.Attribute;
-import weka.core.AttributeStats;
 import weka.core.Instances;
 import weka.core.converters.CSVLoader;
 import java.io.File;
