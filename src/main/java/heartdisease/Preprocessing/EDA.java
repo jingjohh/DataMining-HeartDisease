@@ -352,4 +352,145 @@ public class EDA {
         }
     }
 
+    // Pearson Correlation
+    public static double calculateCorrelation(Instances dataset, int firstIndex, int secondIndex){
+
+        double sumX = 0;
+        double sumY = 0;
+        double sumXY = 0;
+        double sumX2 = 0;
+        double sumY2 = 0;
+
+        int count = 0;
+
+        for (int i = 0; i < dataset.numInstances(); i++){
+
+            if (dataset.instance(i).isMissing(firstIndex) || dataset.instance(i).isMissing(secondIndex)){
+                continue;
+            }
+
+            double x = dataset.instance(i).value(firstIndex);
+            double y = dataset.instance(i).value(secondIndex);
+
+            sumX += x;
+            sumY += y;
+            sumXY += x * y;
+            sumX2 += x * x;
+            sumY2 += y * y;
+
+            count++;
+        }
+
+        if (count < 2){
+            return Double.NaN;
+        }
+
+        double numerator = count * sumXY - sumX * sumY;
+
+        double denominatorX = count * sumX2 - sumX * sumX;
+
+        double denominatorY = count * sumY2 - sumY * sumY;
+
+        double denominator = Math.sqrt(denominatorX * denominatorY);
+
+        if (denominator == 0){
+            return Double.NaN;
+        }
+
+        return numerator / denominator;
+    }
+
+    // Correlation matrix
+    public static void printCorrelationAnalysis(Instances dataset){
+
+        System.out.println("\n--- CORRELATION ANALYSIS ---");
+
+        ArrayList<Integer> numericalIndices = new ArrayList<>();
+
+        // Collect numerical features, excluding target
+        for (int i = 0; i < dataset.numAttributes(); i++){
+
+            Attribute attribute = dataset.attribute(i);
+
+            if (attribute.isNumeric()
+                    && !attribute.name().equals(TARGET_ATTRIBUTE)){
+
+                numericalIndices.add(i);
+            }
+        }
+
+        if (numericalIndices.isEmpty()){
+            System.out.println("No numerical features found");
+            return;
+        }
+
+        // Print correlation matrix header
+        System.out.printf("%-20s", "");
+
+        for (int index : numericalIndices){
+            System.out.printf("%-12s",
+                    dataset.attribute(index).name());
+        }
+
+        System.out.println();
+
+        // Calculate correlation matrix
+        for (int firstIndex : numericalIndices){
+
+            System.out.printf("%-20s",
+                    dataset.attribute(firstIndex).name());
+
+            for (int secondIndex : numericalIndices){
+
+                double correlation = calculateCorrelation(
+                        dataset, firstIndex, secondIndex
+                );
+
+                if (Double.isNaN(correlation)){
+                    System.out.printf("%-12s", "N/A");
+                } else {
+                    System.out.printf("%-12.3f", correlation);
+                }
+            }
+
+            System.out.println();
+        }
+
+        // Identify highly correlated feature pairs
+        System.out.println("\n--- HIGH CORRELATION PAIRS ---");
+
+        boolean found = false;
+
+        for (int i = 0; i < numericalIndices.size(); i++){
+
+            for (int j = i + 1; j < numericalIndices.size(); j++){
+
+                int firstIndex = numericalIndices.get(i);
+                int secondIndex = numericalIndices.get(j);
+
+                double correlation = calculateCorrelation(
+                        dataset, firstIndex, secondIndex
+                );
+
+                if (!Double.isNaN(correlation)
+                        && Math.abs(correlation) >= 0.7){
+
+                    System.out.printf(
+                            "%s - %s : %.3f%n",
+                            dataset.attribute(firstIndex).name(),
+                            dataset.attribute(secondIndex).name(),
+                            correlation
+                    );
+
+                    found = true;
+                }
+            }
+        }
+
+        if (!found){
+            System.out.println("No feature pairs with |r| >= 0.7");
+        }
+    }
+
+
 }
