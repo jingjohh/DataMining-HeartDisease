@@ -206,4 +206,49 @@ public class DataLoader {
 
         System.out.println("\nTotal Missing Values: " + totalMissing);
     }
+
+    // Target analysis
+    public static void printTargetAnalysis(Instances dataset){
+
+        System.out.println("--- TARGET ANALYSIS ---");
+
+        Attribute target = dataset.attribute(TARGET_ATTRIBUTE);
+        
+        // check if target attribute exists
+        if (target == null){
+            System.out.println("Target attribute not found");
+            return;
+        }
+
+        // check type value of target attribute
+        if(!target.isNominal()){
+            System.out.println("Target must be categorical");
+            return;
+        }
+
+        int targetIndex = target.index();           // take postion index of target
+
+        AttributeStats stats = dataset.attributeStats(targetIndex);         //  // retrieve statistics
+
+        System.out.println("Target Attribute: " + target.name());
+
+        int validCount = dataset.numInstances() - stats.missingCount;       // calculate number of valid records
+
+        for (int i = 0; i < target.numValues(); i++){
+            
+            String className = target.value(i);
+
+            int count = stats.nominalCounts[i];
+
+            double percentage;
+
+            if (validCount == 0){
+                    percentage = 0;
+            } else {
+                percentage = (double) count / validCount * 100;
+            }
+
+             System.out.printf("%-15s : %d (%.2f%%)%n", className, count, percentage);
+        }
+    }
 }
