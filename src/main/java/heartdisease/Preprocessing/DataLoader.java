@@ -67,4 +67,15 @@ public class DataLoader {
         return dataset;
     }
 
+    public static void printDatasetOverview(Instances dataset){
+        
+        System.out.println("--- DATASET OVERVIEW ---");
+
+        System.out.println("Dataset name: Heart Disease Dataset");
+
+        System.out.println("Total records: " + dataset.numInstances());
+
+        System.out.println("Total attributes: " + dataset.numAttributes());
+    }
+
 }
