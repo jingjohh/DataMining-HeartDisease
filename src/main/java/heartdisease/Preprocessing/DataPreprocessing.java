@@ -421,4 +421,179 @@ public class DataPreprocessing {
             );
         }
     }
+
+    // Store mean and standard deviation for each numerical attribute
+    public static class Standardizer {
+
+        private double[] means;
+        private double[] standardDeviations;
+        private boolean[] hasStatistics;
+
+        public Standardizer(int numAttributes) {
+            means = new double[numAttributes];
+            standardDeviations = new double[numAttributes];
+            hasStatistics = new boolean[numAttributes];
+        }
+    }
+
+    // Fit standardization statistics using training data
+    public static Standardizer fitStandardizer(Instances trainingData) {
+
+        System.out.println("\n--- FIT STANDARDIZER ---");
+
+        Standardizer standardizer =
+                new Standardizer(trainingData.numAttributes());
+
+        Attribute target = trainingData.attribute(TARGET_ATTRIBUTE);
+
+        if (target == null) {
+            throw new IllegalArgumentException(
+                    "Target attribute not found."
+            );
+        }
+
+        int targetIndex = target.index();
+
+        for (int i = 0; i < trainingData.numAttributes(); i++) {
+
+            Attribute attribute = trainingData.attribute(i);
+
+            // Skip target and non-numerical attributes
+            if (i == targetIndex || !attribute.isNumeric()) {
+                continue;
+            }
+
+            double sum = 0;
+            int count = 0;
+
+            // Calculate the mean
+            for (int j = 0; j < trainingData.numInstances(); j++) {
+
+                Instance instance = trainingData.instance(j);
+
+                if (!instance.isMissing(i)) {
+                    sum += instance.value(i);
+                    count++;
+                }
+            }
+
+            if (count < 2) {
+                System.out.println(attribute.name() + ": Insufficient data");
+                continue;
+            }
+
+            double mean = sum / count;
+
+            double squaredDifferenceSum = 0;
+
+            // Calculate the sum of squared differences
+            for (int j = 0; j < trainingData.numInstances(); j++) {
+
+                Instance instance = trainingData.instance(j);
+
+                if (!instance.isMissing(i)) {
+
+                    double difference = instance.value(i) - mean;
+
+                    squaredDifferenceSum += difference * difference;
+                }
+            }
+
+            // Calculate sample standard deviation
+            double standardDeviation =
+                    Math.sqrt(squaredDifferenceSum / (count - 1));
+
+            // Avoid division by zero for constant attributes
+            if (standardDeviation == 0) {
+                System.out.println(attribute.name() + ": Standard deviation is zero");
+                continue;
+            }
+
+            // Save statistics for later transformation
+            standardizer.means[i] = mean;
+            standardizer.standardDeviations[i] = standardDeviation;
+            standardizer.hasStatistics[i] = true;
+
+            System.out.printf(
+                    "%s | Mean: %.2f | Std: %.2f%n",
+                    attribute.name(), mean, standardDeviation
+            );
+        }
+        return standardizer;
+    }
+
+    // Apply standardization using previously calculated statistics
+    public static Instances transformStandardization(
+            Instances dataset,
+            Standardizer standardizer) {
+
+        System.out.println("\n--- APPLY STANDARDIZATION ---");
+
+        if (dataset.numAttributes() != standardizer.means.length) {
+            throw new IllegalArgumentException(
+                    "Dataset structure does not match standardizer."
+            );
+        }
+
+        // Create a copy to preserve the original dataset
+        Instances standardizedDataset = new Instances(dataset);
+
+        Attribute target = standardizedDataset.attribute(TARGET_ATTRIBUTE);
+
+        if (target == null) {
+            throw new IllegalArgumentException(
+                    "Target attribute not found."
+            );
+        }
+
+        int targetIndex = target.index();
+
+        int standardizedCount = 0;
+
+        for (int i = 0; i < standardizedDataset.numAttributes(); i++) {
+
+            Attribute attribute = standardizedDataset.attribute(i);
+
+            // Skip target and non-numerical attributes
+            if (i == targetIndex || !attribute.isNumeric()) {
+                continue;
+            }
+
+            if (!standardizer.hasStatistics[i]) {
+                continue;
+            }
+
+            double mean = standardizer.means[i];
+            double standardDeviation =
+                    standardizer.standardDeviations[i];
+
+            for (int j = 0; j < standardizedDataset.numInstances(); j++) {
+
+                Instance instance = standardizedDataset.instance(j);
+
+                // Keep missing values unchanged
+                if (instance.isMissing(i)) {
+                    continue;
+                }
+
+                // Apply Z-score standardization
+                double value = instance.value(i);
+
+                double standardizedValue =
+                        (value - mean) / standardDeviation;
+
+                instance.setValue(i, standardizedValue);
+
+                standardizedCount++;
+            }
+
+            System.out.println(attribute.name() + ": Standardized");
+        }
+
+        System.out.println(
+                "Total standardized values: " + standardizedCount
+        );
+
+        return standardizedDataset;
+    }
 }
