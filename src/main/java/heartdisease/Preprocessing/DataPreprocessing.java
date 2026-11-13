@@ -223,4 +223,202 @@ public class DataPreprocessing {
 
         return processedDataset;
     }
+
+    // Handling outlier
+    // Calculate quartiles
+    private static double[] calculateQuartiles(ArrayList<Double> values) {
+
+        Collections.sort(values);
+
+        int size = values.size();
+
+        if (size < 2) {
+            throw new IllegalArgumentException(
+                    "At least two values are required."
+            );
+        }
+
+        int middle = size / 2;
+
+        ArrayList<Double> lowerHalf = new ArrayList<>(values.subList(0, middle));
+
+        int upperStart;
+
+        if (size % 2 == 0) {
+            upperStart = middle;
+        } else {
+            upperStart = middle + 1;
+        }
+
+        ArrayList<Double> upperHalf = new ArrayList<>(values.subList(upperStart, size));
+
+        // Calculate Q1 and Q3 using the median of two halves
+        double q1 = calculateMedian(lowerHalf);
+        double q3 = calculateMedian(upperHalf);
+
+        return new double[]{q1, q3};
+    }
+
+    // OutlierBounds class
+    // Store IQR boundaries for each numerical attribute
+    public static class OutlierBounds {
+
+        private double[] lowerBounds;
+        private double[] upperBounds;
+        private boolean[] hasBounds;
+
+        public OutlierBounds(int numAttributes) {
+            // Each index corresponds to an attribute in the dataset
+            lowerBounds = new double[numAttributes];
+            upperBounds = new double[numAttributes];
+            hasBounds = new boolean[numAttributes];
+        }
+    }
+
+    // Fit outlier boundaries using training data
+    public static OutlierBounds fitOutlierBounds(Instances trainingData) {
+
+        System.out.println("\n--- FIT OUTLIER BOUNDS ---");
+        
+        // Create storage for the lower and upper bounds
+        OutlierBounds bounds = new OutlierBounds(trainingData.numAttributes());
+
+        Attribute target = trainingData.attribute(TARGET_ATTRIBUTE);
+
+        if (target == null) {
+            throw new IllegalArgumentException(
+                "Target attribute not found."
+            );
+        }
+
+        int targetIndex = target.index();
+
+        for (int i = 0; i < trainingData.numAttributes(); i++) {
+
+            Attribute attribute = trainingData.attribute(i);
+
+            // Skip the target and non-numerical attributes
+            if (i == targetIndex || !attribute.isNumeric()) {
+                continue;
+            }
+
+            ArrayList<Double> values = new ArrayList<>();
+
+            for (int j = 0;
+                j < trainingData.numInstances(); j++) {
+
+                Instance instance = trainingData.instance(j);
+                
+                // Collect only non-missing values
+                if (!instance.isMissing(i)) {
+                        values.add(instance.value(i));
+                }
+            }
+
+            // Quartiles require at least two values
+            if (values.size() < 2) {
+                System.out.println( attribute.name() + ": Insufficient data");
+                continue;
+            }
+
+            double[] quartiles = calculateQuartiles(values);
+
+            double q1 = quartiles[0];
+            double q3 = quartiles[1];
+            
+            double iqr = q3 - q1;       // Calculate Interquartile Range
+
+            // Calculate the lower and upper outlier boundaries
+            double lower = q1 - 1.5 * iqr;
+            double upper = q3 + 1.5 * iqr;
+
+            bounds.lowerBounds[i] = lower;
+            bounds.upperBounds[i] = upper;
+            bounds.hasBounds[i] = true;
+
+            System.out.printf("%s | Q1: %.2f | Q3: %.2f | IQR: %.2f" + " | Lower: %.2f | Upper: %.2f%n", attribute.name(), q1, q3, iqr, lower, upper);
+        }
+
+        return bounds;
+    }
+
+    // Outlier Analysis
+    public static void analyzeOutliers(Instances dataset, OutlierBounds bounds) {
+
+        System.out.println("\n--- OUTLIER ANALYSIS ---");
+
+        // Ensure the dataset has the same number of attributes
+        if (dataset.numAttributes() != bounds.lowerBounds.length) {
+            throw new IllegalArgumentException(
+                    "Dataset structure does not match outlier bounds."
+            );
+        }
+
+        Attribute target = dataset.attribute(TARGET_ATTRIBUTE);
+
+        if (target == null) {
+            throw new IllegalArgumentException(
+                    "Target attribute not found."
+            );
+        }
+
+        int targetIndex = target.index();
+
+        for (int i = 0; i < dataset.numAttributes(); i++) {
+
+            Attribute attribute = dataset.attribute(i);
+
+             // Skip the target and non-numerical attributes
+            if (i == targetIndex || !attribute.isNumeric()) {
+                continue;
+            }
+
+            // Skip attributes without calculated boundaries
+            if (!bounds.hasBounds[i]) {
+                System.out.println(
+                        attribute.name() + ": Cannot analyze"
+                );
+                continue;
+            }
+
+            int outlierCount = 0;
+            int validCount = 0;
+
+            for (int j = 0; j < dataset.numInstances(); j++) {
+
+                Instance instance = dataset.instance(j);
+
+                // Ignore missing values during analysis
+                if (instance.isMissing(i)) {
+                    continue;
+                }
+
+                validCount++;
+
+                double value = instance.value(i);
+
+                // A value outside either boundary is an outlier
+                if (value < bounds.lowerBounds[i] || value > bounds.upperBounds[i]) {
+                    outlierCount++;
+                }
+            }
+
+            // Calculate the percentage of outliers
+            double percentage;
+
+            if (validCount == 0) {
+                percentage = 0;
+            } else {
+                percentage = (double) outlierCount / validCount * 100;
+            }
+
+            System.out.printf(
+                    "%-25s | Outliers: %d | Valid: %d | Rate: %.2f%%%n",
+                    attribute.name(),
+                    outlierCount,
+                    validCount,
+                    percentage
+            );
+        }
+    }
 }
