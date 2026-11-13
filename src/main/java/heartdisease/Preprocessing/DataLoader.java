@@ -181,4 +181,29 @@ public class DataLoader {
             }
         }
     }
+
+    //Missing value
+    public static void printMissingValue(Instances dataset){
+
+        System.out.println("--- MISSING VALUE SUMMARY ---");
+
+        int totalMissing = 0;
+
+        for (int i = 0; i < dataset.numAttributes(); i++){
+            
+            AttributeStats stats = dataset.attributeStats(i);
+
+            int missing = stats.missingCount;           // number of missing values for each attribute
+
+            totalMissing += missing;
+
+            if (missing > 0){
+                double percentage = (double) missing / dataset.numInstances() * 100;
+
+                System.out.printf("%-25s : %d (%.2f%%)%n", dataset.attribute(i).name(), missing, percentage);
+            }
+        }
+
+        System.out.println("\nTotal Missing Values: " + totalMissing);
+    }
 }
