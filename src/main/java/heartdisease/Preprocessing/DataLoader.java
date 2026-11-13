@@ -67,8 +67,9 @@ public class DataLoader {
         return dataset;
     }
 
+    // Dataset overview
     public static void printDatasetOverview(Instances dataset){
-        
+
         System.out.println("--- DATASET OVERVIEW ---");
 
         System.out.println("Dataset name: Heart Disease Dataset");
@@ -78,4 +79,40 @@ public class DataLoader {
         System.out.println("Total attributes: " + dataset.numAttributes());
     }
 
+    // Attribute information
+    public static void printAttributeInfo(Instances dataset){
+
+        System.out.println("--- ATTRIBUTE INFORMATION");
+
+        for (int i = 0; i < dataset.numAttributes(); i++){
+            
+            Attribute attribute = dataset.attribute(i);         // Take each attribute from data
+
+            String type;
+
+            // check type of attribute
+            if (attribute.isNumeric()){
+                type = "Numeric";
+            } else if (attribute.isNominal()){
+                type = "Categorical";
+            } else if (attribute.isString()){
+                type = "String";
+            } else if (attribute.isDate()){
+                type = "Date";
+            } else {
+                type = "Other";
+            }
+
+            String role;
+
+            // Assign role to attribute
+            if (attribute.name().equals(TARGET_ATTRIBUTE)) {
+                role = "TARGET";
+            } else {
+                role = "FEATURE";
+            }
+            
+            System.out.printf("%-25s | %-12s | %s%n", attribute.name(), type, role);
+        }
+    }
 }
