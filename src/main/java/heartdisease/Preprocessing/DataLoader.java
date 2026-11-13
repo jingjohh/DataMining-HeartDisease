@@ -181,7 +181,7 @@ public class DataLoader {
     // Target analysis
     public static void printTargetAnalysis(Instances dataset){
 
-        System.out.println("--- TARGET ANALYSIS ---");
+        System.out.println("\n--- TARGET ANALYSIS ---");
 
         Attribute target = dataset.attribute(TARGET_ATTRIBUTE);
         
