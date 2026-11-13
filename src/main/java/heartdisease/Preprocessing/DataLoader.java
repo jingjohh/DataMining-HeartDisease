@@ -32,9 +32,6 @@ public class DataLoader {
             // Categorical analysis
             printCategoricalAnalysis(dataset);
 
-            // Missing value summary
-            printMissingValue(dataset);
-
             // Target analysis
             printTargetAnalysis(dataset);
 
@@ -179,31 +176,6 @@ public class DataLoader {
                 System.out.printf("%-15s : %d%n", value, count);
             }
         }
-    }
-
-    //Missing value
-    public static void printMissingValue(Instances dataset){
-
-        System.out.println("\n--- MISSING VALUE SUMMARY ---");
-
-        int totalMissing = 0;
-
-        for (int i = 0; i < dataset.numAttributes(); i++){
-            
-            AttributeStats stats = dataset.attributeStats(i);
-
-            int missing = stats.missingCount;           // number of missing values for each attribute
-
-            totalMissing += missing;
-
-            if (missing > 0){
-                double percentage = (double) missing / dataset.numInstances() * 100;
-
-                System.out.printf("%-25s : %d (%.2f%%)%n", dataset.attribute(i).name(), missing, percentage);
-            }
-        }
-
-        System.out.println("\nTotal Missing Values: " + totalMissing);
     }
 
     // Target analysis
