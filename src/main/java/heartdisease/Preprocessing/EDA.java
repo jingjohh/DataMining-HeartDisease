@@ -492,5 +492,126 @@ public class EDA {
         }
     }
 
+    // Analysis relationship of numerical feature vs target 
+    public static void printNumericalTargetRelationship(Instances dataset){
+
+        System.out.println("\n--- NUMERICAL FEATURES VS TARGET ---");
+
+        Attribute target = dataset.attribute(TARGET_ATTRIBUTE);
+
+        if (target == null || !target.isNominal()){
+            System.out.println("Invalid target attribute");
+            return;
+        }
+
+        for (int i = 0; i < dataset.numAttributes(); i++){
+
+            Attribute feature = dataset.attribute(i);
+
+            // Only analyze numerical features
+            if (!feature.isNumeric()){
+                continue;
+            }
+
+            System.out.println("\nFeature: " + feature.name());
+
+            for (int k = 0; k < target.numValues(); k++){
+
+                String className = target.value(k);
+
+                double sum = 0;
+                int count = 0;
+
+                for (int j = 0; j < dataset.numInstances(); j++){
+
+                    if (dataset.instance(j).isMissing(i) || dataset.instance(j).isMissing(target.index())){
+                        continue;
+                    }
+
+                    String targetValue = dataset.instance(j).stringValue(target.index());
+
+                    if (targetValue.equals(className)){
+                        sum += dataset.instance(j).value(i);
+                        count++;
+                    }
+                }
+
+                if (count > 0){
+
+                    double mean = sum / count;
+
+                    System.out.printf("%-15s | Count: %-6d | Mean: %.3f%n", className, count, mean);
+                
+                } else {
+                    System.out.println(className + " | No valid records");
+                }
+            }
+        }
+    }
+
+    // Analysis relationship of categorical feature vs target
+    public static void printCategoricalTargetRelationship(Instances dataset){
+
+        System.out.println("\n--- CATEGORICAL FEATURES VS TARGET ---");
+
+        Attribute target = dataset.attribute(TARGET_ATTRIBUTE);
+
+        if (target == null || !target.isNominal()){
+            System.out.println("Invalid target attribute");
+            return;
+        }
+
+        for (int i = 0; i < dataset.numAttributes(); i++){
+
+            Attribute feature = dataset.attribute(i);
+
+            if (!feature.isNominal() || feature.name().equals(TARGET_ATTRIBUTE)){
+                continue;
+            }
+
+            System.out.println("\nFeature: " + feature.name());
+
+            System.out.printf("%-20s", "Category");
+
+            for (int k = 0; k < target.numValues(); k++){
+                System.out.printf("%-15s", target.value(k));
+            }
+
+            System.out.println();
+
+            for (int v = 0; v < feature.numValues(); v++){
+
+                String category = feature.value(v);
+
+                System.out.printf("%-20s", category);
+
+                for (int k = 0; k < target.numValues(); k++){
+
+                    String className = target.value(k);
+
+                    int count = 0;
+
+                    for (int j = 0; j < dataset.numInstances(); j++){
+
+                        if (dataset.instance(j).isMissing(i) || dataset.instance(j).isMissing(target.index())){
+                            continue;
+                        }
+
+                        String featureValue = dataset.instance(j).stringValue(i);
+
+                        String targetValue = dataset.instance(j).stringValue(target.index());
+
+                        if (featureValue.equals(category) && targetValue.equals(className)){
+                            count++;
+                        }
+                    }
+
+                    System.out.printf("%-15d", count);
+                }
+
+                System.out.println();
+            }
+        }
+    }
 
 }
