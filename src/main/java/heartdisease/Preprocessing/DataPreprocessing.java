@@ -645,4 +645,30 @@ public class DataPreprocessing {
         System.out.println("Number of attributes: " + dataset.numAttributes());
 
     }
+
+    // Prepare the shared dataset for model development
+    public static Instances prepareSharedDataset(Instances dataset) {
+
+        System.out.println("\n--- PREPARE SHARED DATASET ---");
+
+        // Remove records with missing target
+        Instances preparedDataset = removeMissingTarget(dataset);
+
+        // Set target attribute as class
+        Attribute target = preparedDataset.attribute(TARGET_ATTRIBUTE);
+
+        if (target == null) {
+            throw new IllegalArgumentException(
+                    "Target attribute not found."
+            );
+        }
+
+        preparedDataset.setClassIndex(target.index());
+
+        System.out.println("Shared dataset is ready.");
+        System.out.println("Instances: " + preparedDataset.numInstances());
+        System.out.println("Attributes: " + preparedDataset.numAttributes());
+
+        return preparedDataset;
+    }
 }
