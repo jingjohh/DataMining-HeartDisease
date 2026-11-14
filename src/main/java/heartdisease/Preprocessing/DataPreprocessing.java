@@ -9,6 +9,10 @@ import weka.core.Instances;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import weka.core.converters.ArffSaver;
+import java.io.File;
+import java.io.IOException;
+
 public class DataPreprocessing {
 
     private static final String TARGET_ATTRIBUTE = "Heart Disease Status";
@@ -595,5 +599,50 @@ public class DataPreprocessing {
         );
 
         return standardizedDataset;
+    }
+
+    // Convert dataset to ARFF format
+    public static void saveAsArff(Instances dataset, String outputPath) throws IOException {
+        
+        System.out.println("\n--- ARFF CONVERSION ---");
+
+        if (dataset == null || dataset.numInstances() == 0) {
+            throw new IllegalArgumentException(
+                    "Dataset is empty or null."
+            );
+        }
+
+        // Check whether the target attribute exists
+        Attribute target = dataset.attribute(TARGET_ATTRIBUTE);
+
+        if (target == null) {
+            throw new IllegalArgumentException(
+                    "Target attribute not found."
+            );
+        }
+
+        // Create output directory if it does not exist
+        File outputFile = new File(outputPath);
+
+        File parentDirectory = outputFile.getParentFile();
+
+        if (parentDirectory != null && !parentDirectory.exists()) {
+            parentDirectory.mkdirs();
+        }
+
+        // Create ARFF saver
+        ArffSaver saver = new ArffSaver();
+
+        saver.setInstances(dataset);
+        saver.setFile(outputFile);
+
+        // Write dataset to ARFF file
+        saver.writeBatch();
+
+        System.out.println("ARFF file saved successfully!");
+        System.out.println("Output path: " + outputFile.getAbsolutePath());
+        System.out.println("Number of instances: " + dataset.numInstances());
+        System.out.println("Number of attributes: " + dataset.numAttributes());
+
     }
 }
