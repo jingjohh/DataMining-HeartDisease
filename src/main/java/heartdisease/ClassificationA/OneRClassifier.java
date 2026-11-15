@@ -36,7 +36,7 @@ public class OneRClassifier {
         model = (OneR) SerializationHelper.read(path);
     }
 
-    // Get model for integration
+    // Return model for evaluation
     public OneR getModel() {
         return model;
     }
