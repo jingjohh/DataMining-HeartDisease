@@ -13,17 +13,17 @@ public class ClassificationATest {
 
     public static void main(String[] args) throws Exception {
 
-        // 1. Load dataset
+        // Load dataset
         Instances data = DataSource.read(
             "data/processed/heart_disease.arff"
         );
 
-        // 2. Set class attribute
+        // Set class attribute
         data.setClassIndex(
             data.attribute("Heart Disease Status").index()
         );
 
-        // 3. Split dataset: 80% train, 20% test
+        // Split dataset: 80% train, 20% test
         data.randomize(new Random(42));
         data.stratify(5);
 
@@ -35,7 +35,7 @@ public class ClassificationATest {
         System.out.println("Testing size: "
             + testData.numInstances());
 
-        // 4. Create folder for models
+        // Create folder for models
         Files.createDirectories(Paths.get("models"));
 
         // Select one instance from test dataset
