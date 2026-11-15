@@ -34,7 +34,7 @@ public class J48Classifier {
         model = (J48) SerializationHelper.read(path);
     }
 
-    // Return model for evaluation framework
+    // Return model for evaluation
     public J48 getModel() {
         return model;
     }
