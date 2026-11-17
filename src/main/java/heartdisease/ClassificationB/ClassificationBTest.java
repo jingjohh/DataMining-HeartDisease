@@ -74,6 +74,11 @@ for (int i = 0; i < data.numAttributes(); i++) {
         NaiveBayesClassifier nb = new NaiveBayesClassifier();
         nb.train(trainData);
 
+        System.out.println("Naive Bayes configuration:");
+        System.out.println(
+            java.util.Arrays.toString(nb.getClassifier().getOptions())
+        );
+
         double nbPrediction = nb.predict(patient);
 
         System.out.println("Actual: " + patient.stringValue(
@@ -112,6 +117,11 @@ for (int i = 0; i < data.numAttributes(); i++) {
 
         SimpleLogisticClassifier sl = new SimpleLogisticClassifier();
         sl.train(trainData);
+
+        System.out.println("SimpleLogistic configuration:");
+        System.out.println(
+            java.util.Arrays.toString(sl.getClassifier().getOptions())
+        );
 
         double slPrediction = sl.predict(patient);
 
