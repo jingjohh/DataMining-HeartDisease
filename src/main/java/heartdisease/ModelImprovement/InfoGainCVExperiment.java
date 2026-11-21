@@ -8,6 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+// Classification B 
+import heartdisease.ClassificationB.NaiveBayesClassifier;
+import heartdisease.ClassificationB.SimpleLogisticClassifier;
+
+// Weka
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
@@ -46,12 +51,16 @@ public class InfoGainCVExperiment {
     public static void main(String[] args) throws Exception {
 
         // Store all Step 3 experiment results.
-        List<ImprovementResult> results = new ArrayList<>();
+        List<ImprovementResult> results =
+                new ArrayList<>();
 
-        // STEP 1: Load dataset.
+        // ========================================
+        // STEP 1: LOAD DATASET
+        // ========================================
+
         Instances data = DataSource.read(DATA_PATH);
 
-        if (data == null) {
+        if (data == null || data.numInstances() == 0) {
             throw new IllegalStateException(
                     "Cannot load dataset: " + DATA_PATH
             );
@@ -78,24 +87,32 @@ public class InfoGainCVExperiment {
             );
         }
 
-        // STEP 2: Reproduce the original train/test split.
+        // ========================================
+        // STEP 2: PREPARE TRAINING DATA
+        // ========================================
+
+        // Reproduce the original train/test split.
         data.randomize(new Random(RANDOM_SEED));
         data.stratify(5);
 
         Instances trainData = data.trainCV(5, 0);
 
         // IMPORTANT:
-        // The remaining 2,000 test instances are not used
-        // when selecting Step 3 configurations.
+        // The remaining 2,000 test instances are not
+        // used when selecting Step 3 configurations.
 
-        // STEP 3: Print experiment information.
+        // ========================================
+        // STEP 3: PRINT EXPERIMENT INFORMATION
+        // ========================================
+
         System.out.println("================================");
         System.out.println("STEP 3 - MODEL IMPROVEMENT");
-        System.out.println("INFORMATION GAIN EXPERIMENT");
+        System.out.println("FEATURE SELECTION EXPERIMENT");
         System.out.println("================================");
 
         System.out.println(
-                "Training instances: " + trainData.numInstances()
+                "Training instances: "
+                        + trainData.numInstances()
         );
 
         System.out.println("CV folds: " + CV_FOLDS);
@@ -105,9 +122,13 @@ public class InfoGainCVExperiment {
                         + (trainData.numAttributes() - 1)
         );
 
-        // ============================================
+        System.out.println(
+                "Total classifiers: 5"
+        );
+
+        // ========================================
         // STEP 4: J48 EXPERIMENTS
-        // ============================================
+        // ========================================
 
         J48 j48 = new J48();
 
@@ -119,9 +140,9 @@ public class InfoGainCVExperiment {
                 results
         );
 
-        // ============================================
+        // ========================================
         // STEP 5: ONER EXPERIMENTS
-        // ============================================
+        // ========================================
 
         OneR oneR = new OneR();
         oneR.setMinBucketSize(6);
@@ -134,9 +155,9 @@ public class InfoGainCVExperiment {
                 results
         );
 
-        // ============================================
+        // ========================================
         // STEP 6: RANDOM FOREST EXPERIMENTS
-        // ============================================
+        // ========================================
 
         RandomForest rf = new RandomForest();
         rf.setNumIterations(100);
@@ -150,9 +171,42 @@ public class InfoGainCVExperiment {
                 results
         );
 
-        // ============================================
-        // STEP 7: EXPORT EXPERIMENT RESULTS
-        // ============================================
+        // ========================================
+        // STEP 7: NAIVE BAYES EXPERIMENTS
+        // ========================================
+
+        NaiveBayesClassifier naiveBayes =
+                new NaiveBayesClassifier();
+
+        // Use the original Weka classifier.
+        // Do not pre-train it before cross-validation.
+        compareMethods(
+                "Naive Bayes",
+                naiveBayes.getClassifier(),
+                trainData,
+                positiveClass,
+                results
+        );
+
+        // ========================================
+        // STEP 8: SIMPLE LOGISTIC EXPERIMENTS
+        // ========================================
+
+        SimpleLogisticClassifier simpleLogistic =
+                new SimpleLogisticClassifier();
+
+        // Keep the original configuration from Step 2.
+        compareMethods(
+                "SimpleLogistic",
+                simpleLogistic.getClassifier(),
+                trainData,
+                positiveClass,
+                results
+        );
+
+        // ========================================
+        // STEP 9: EXPORT EXPERIMENT RESULTS
+        // ========================================
 
         saveResultsToCsv(results);
 
@@ -212,11 +266,13 @@ public class InfoGainCVExperiment {
 
         FilteredClassifier cfs =
                 FeatureSelectionPipeline.createCFSModel(
-                        AbstractClassifier.makeCopy(baseClassifier)
+                        AbstractClassifier.makeCopy(
+                                baseClassifier
+                        )
                 );
 
-        // -1 means that the exact feature count is
-        // not fixed across cross-validation folds.
+        // -1 means the exact selected feature count
+        // is not fixed across cross-validation folds.
         evaluateCV(
                 name,
                 "CFS + BestFirst",
@@ -243,7 +299,9 @@ public class InfoGainCVExperiment {
 
             FilteredClassifier improved =
                     FeatureSelectionPipeline.createInfoGainModel(
-                            AbstractClassifier.makeCopy(baseClassifier),
+                            AbstractClassifier.makeCopy(
+                                    baseClassifier
+                            ),
                             k
                     );
 
@@ -273,13 +331,17 @@ public class InfoGainCVExperiment {
             List<ImprovementResult> results
     ) throws Exception {
 
-        Evaluation evaluation = new Evaluation(trainData);
+        Evaluation evaluation =
+                new Evaluation(trainData);
 
-        // Each experiment uses identical folds and seed.
+        // Each experiment uses the same seed.
         //
-        // When a FilteredClassifier is provided,
-        // feature selection is fitted inside each
-        // training fold to avoid data leakage.
+        // For FilteredClassifier:
+        // Feature selection is learned separately
+        // inside each training fold.
+        //
+        // The validation fold is not used to fit
+        // the feature selection filter.
         evaluation.crossValidateModel(
                 model,
                 trainData,
@@ -307,7 +369,9 @@ public class InfoGainCVExperiment {
         // PRINT EXPERIMENT RESULT
         // ========================================
 
-        System.out.println("\n--- " + methodName + " ---");
+        System.out.println(
+                "\n--- " + methodName + " ---"
+        );
 
         System.out.printf(
                 "Accuracy: %.2f%%%n",
@@ -345,23 +409,33 @@ public class InfoGainCVExperiment {
 
         Path outputFile = Path.of(OUTPUT_PATH);
 
-        // Create the results folder if necessary.
-        Files.createDirectories(outputFile.getParent());
+        // Create results folder if necessary.
+        Files.createDirectories(
+                outputFile.getParent()
+        );
 
-        StringBuilder csv = new StringBuilder();
+        StringBuilder csv =
+                new StringBuilder();
 
         // Write CSV header.
-        csv.append(ImprovementResult.csvHeader())
-                .append(System.lineSeparator());
+        csv.append(
+                ImprovementResult.csvHeader()
+        ).append(
+                System.lineSeparator()
+        );
 
-        // Write each experiment result.
+        // Write all experiment results.
         for (ImprovementResult result : results) {
-            csv.append(result.toCsvRow())
-                    .append(System.lineSeparator());
+
+            csv.append(
+                    result.toCsvRow()
+            ).append(
+                    System.lineSeparator()
+            );
         }
 
-        // Overwrite the previous CSV with the latest
-        // complete experiment results.
+        // Overwrite the old CSV with the new results
+        // for all five classifiers.
         Files.writeString(
                 outputFile,
                 csv.toString(),
@@ -381,7 +455,8 @@ public class InfoGainCVExperiment {
         );
 
         System.out.println(
-                "File: " + outputFile.toAbsolutePath()
+                "File: "
+                        + outputFile.toAbsolutePath()
         );
 
         System.out.println(

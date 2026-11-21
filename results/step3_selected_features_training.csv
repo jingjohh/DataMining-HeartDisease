@@ -1,0 +1,33 @@
+Method,SelectedFeatureCount,OriginalFeatureIndex,FeatureName,SelectionScope
+CFS + BestFirst,2,13,Alcohol Consumption,FullTraining
+CFS + BestFirst,2,14,Stress Level,FullTraining
+InfoGain Top 5,5,14,Stress Level,FullTraining
+InfoGain Top 5,5,13,Alcohol Consumption,FullTraining
+InfoGain Top 5,5,16,Sugar Consumption,FullTraining
+InfoGain Top 5,5,2,Gender,FullTraining
+InfoGain Top 5,5,12,High LDL Cholesterol,FullTraining
+InfoGain Top 10,10,14,Stress Level,FullTraining
+InfoGain Top 10,10,13,Alcohol Consumption,FullTraining
+InfoGain Top 10,10,16,Sugar Consumption,FullTraining
+InfoGain Top 10,10,2,Gender,FullTraining
+InfoGain Top 10,10,12,High LDL Cholesterol,FullTraining
+InfoGain Top 10,10,6,Smoking,FullTraining
+InfoGain Top 10,10,7,Family Heart Disease,FullTraining
+InfoGain Top 10,10,5,Exercise Habits,FullTraining
+InfoGain Top 10,10,8,Diabetes,FullTraining
+InfoGain Top 10,10,11,Low HDL Cholesterol,FullTraining
+InfoGain Top 15,15,14,Stress Level,FullTraining
+InfoGain Top 15,15,13,Alcohol Consumption,FullTraining
+InfoGain Top 15,15,16,Sugar Consumption,FullTraining
+InfoGain Top 15,15,2,Gender,FullTraining
+InfoGain Top 15,15,12,High LDL Cholesterol,FullTraining
+InfoGain Top 15,15,6,Smoking,FullTraining
+InfoGain Top 15,15,7,Family Heart Disease,FullTraining
+InfoGain Top 15,15,5,Exercise Habits,FullTraining
+InfoGain Top 15,15,8,Diabetes,FullTraining
+InfoGain Top 15,15,11,Low HDL Cholesterol,FullTraining
+InfoGain Top 15,15,10,High Blood Pressure,FullTraining
+InfoGain Top 15,15,4,Cholesterol Level,FullTraining
+InfoGain Top 15,15,3,Blood Pressure,FullTraining
+InfoGain Top 15,15,20,Homocysteine Level,FullTraining
+InfoGain Top 15,15,9,BMI,FullTraining

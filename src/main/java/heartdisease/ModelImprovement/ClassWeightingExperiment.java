@@ -8,6 +8,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
+// Classification B 
+import heartdisease.ClassificationB.NaiveBayesClassifier;
+import heartdisease.ClassificationB.SimpleLogisticClassifier;
+
+// Weka
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
@@ -18,6 +23,10 @@ import weka.core.Instances;
 import weka.core.converters.ConverterUtils.DataSource;
 
 public class ClassWeightingExperiment {
+
+    // ============================================
+    // STEP 3: EXPERIMENT CONFIGURATION
+    // ============================================
 
     private static final String DATA_PATH =
             "data/processed/heart_disease.arff";
@@ -31,19 +40,29 @@ public class ClassWeightingExperiment {
     private static final int RANDOM_SEED = 42;
     private static final int CV_FOLDS = 10;
 
+    // ============================================
+    // MAIN METHOD
+    // ============================================
+
     public static void main(String[] args) throws Exception {
 
-        List<ImprovementResult> results = new ArrayList<>();
+        // Store all experiment results.
+        List<ImprovementResult> results =
+                new ArrayList<>();
 
-        // Load dataset.
+        // ========================================
+        // STEP 1: LOAD DATASET
+        // ========================================
+
         Instances data = DataSource.read(DATA_PATH);
 
-        if (data == null) {
+        if (data == null || data.numInstances() == 0) {
             throw new IllegalStateException(
                     "Cannot load dataset: " + DATA_PATH
             );
         }
 
+        // Check target attribute.
         if (data.attribute(TARGET) == null) {
             throw new IllegalStateException(
                     "Target attribute not found: " + TARGET
@@ -54,6 +73,7 @@ public class ClassWeightingExperiment {
                 data.attribute(TARGET).index()
         );
 
+        // Check binary classification.
         if (!data.classAttribute().isNominal()
                 || data.classAttribute().numValues() != 2) {
 
@@ -62,6 +82,7 @@ public class ClassWeightingExperiment {
             );
         }
 
+        // Define class indices.
         int noIndex =
                 data.classAttribute().indexOfValue("No");
 
@@ -74,14 +95,23 @@ public class ClassWeightingExperiment {
             );
         }
 
+        // ========================================
+        // STEP 2: PREPARE TRAINING DATA
+        // ========================================
+
         // Reproduce the Step 2 split.
         data.randomize(new Random(RANDOM_SEED));
         data.stratify(5);
 
         Instances trainData = data.trainCV(5, 0);
 
-        // Do not use the held-out test instances
-        // for selecting Step 3 configurations.
+        // IMPORTANT:
+        // The held-out 2,000 test instances are
+        // not used for selecting configurations.
+
+        // ========================================
+        // STEP 3: PRINT EXPERIMENT INFORMATION
+        // ========================================
 
         System.out.println("================================");
         System.out.println("STEP 3 - MODEL IMPROVEMENT");
@@ -102,7 +132,14 @@ public class ClassWeightingExperiment {
                         + (trainData.numAttributes() - 1)
         );
 
-        // J48
+        System.out.println(
+                "Total classifiers: 5"
+        );
+
+        // ========================================
+        // STEP 4: J48 EXPERIMENTS
+        // ========================================
+
         J48 j48 = new J48();
 
         compareWeights(
@@ -114,7 +151,10 @@ public class ClassWeightingExperiment {
                 results
         );
 
-        // OneR
+        // ========================================
+        // STEP 5: ONER EXPERIMENTS
+        // ========================================
+
         OneR oneR = new OneR();
         oneR.setMinBucketSize(6);
 
@@ -127,7 +167,10 @@ public class ClassWeightingExperiment {
                 results
         );
 
-        // Random Forest
+        // ========================================
+        // STEP 6: RANDOM FOREST EXPERIMENTS
+        // ========================================
+
         RandomForest rf = new RandomForest();
         rf.setNumIterations(100);
         rf.setSeed(RANDOM_SEED);
@@ -141,9 +184,51 @@ public class ClassWeightingExperiment {
                 results
         );
 
+        // ========================================
+        // STEP 7: NAIVE BAYES EXPERIMENTS
+        // ========================================
+
+        NaiveBayesClassifier naiveBayes =
+                new NaiveBayesClassifier();
+
+        // Use the original Weka classifier.
+        // Cross-validation trains a fresh model
+        // in each training fold.
+        compareWeights(
+                "Naive Bayes",
+                naiveBayes.getClassifier(),
+                trainData,
+                noIndex,
+                yesIndex,
+                results
+        );
+
+        // ========================================
+        // STEP 8: SIMPLE LOGISTIC EXPERIMENTS
+        // ========================================
+
+        SimpleLogisticClassifier simpleLogistic =
+                new SimpleLogisticClassifier();
+
+        // Keep Step 2's default configuration.
+        // Do not train before cross-validation.
+        compareWeights(
+                "SimpleLogistic",
+                simpleLogistic.getClassifier(),
+                trainData,
+                noIndex,
+                yesIndex,
+                results
+        );
+
+        // ========================================
+        // STEP 9: EXPORT EXPERIMENT RESULTS
+        // ========================================
+
         saveResultsToCsv(results);
 
         System.out.println();
+
         System.out.println(
                 "All class weighting experiments completed!"
         );
@@ -157,6 +242,10 @@ public class ClassWeightingExperiment {
                 "Results saved to: " + OUTPUT_PATH
         );
     }
+
+    // ============================================
+    // COMPARE CLASS WEIGHTING CONFIGURATIONS
+    // ============================================
 
     private static void compareWeights(
             String modelName,
@@ -175,9 +264,16 @@ public class ClassWeightingExperiment {
         int featureCount =
                 trainData.numAttributes() - 1;
 
-        // Baseline: original model, all features.
+        // ========================================
+        // EXPERIMENT 0: BASELINE
+        // ========================================
+
+        // Original classifier without additional
+        // class weighting.
         Classifier baseline =
-                AbstractClassifier.makeCopy(baseClassifier);
+                AbstractClassifier.makeCopy(
+                        baseClassifier
+                );
 
         evaluateCV(
                 modelName,
@@ -189,15 +285,21 @@ public class ClassWeightingExperiment {
                 results
         );
 
-        // Direct class weighting configurations.
+        // ========================================
+        // EXPERIMENTS 1-3: DIRECT CLASS WEIGHTING
+        // ========================================
+
+        // ClassWeightingConfig supplies weights 2, 4, 8.
         for (int yesWeight :
                 ClassWeightingConfig.getYesClassWeights()) {
 
+            // Fresh classifier copy for each experiment.
             Classifier copiedClassifier =
                     AbstractClassifier.makeCopy(
                             baseClassifier
                     );
 
+            // Apply direct class weighting.
             Classifier weightedModel =
                     ClassWeightingConfig.createWeightedClassifier(
                             copiedClassifier,
@@ -218,6 +320,10 @@ public class ClassWeightingExperiment {
         }
     }
 
+    // ============================================
+    // RUN CROSS-VALIDATION EXPERIMENT
+    // ============================================
+
     private static void evaluateCV(
             String modelName,
             String methodName,
@@ -231,12 +337,23 @@ public class ClassWeightingExperiment {
         Evaluation evaluation =
                 new Evaluation(trainData);
 
+        // Stratified 10-fold cross-validation.
+        //
+        // Direct class weighting is performed
+        // inside classifier training.
+        //
+        // Each fold uses its own training subset.
+        // Validation data is not reweighted.
         evaluation.crossValidateModel(
                 model,
                 trainData,
                 CV_FOLDS,
                 new Random(RANDOM_SEED)
         );
+
+        // ========================================
+        // STORE EXPERIMENT RESULT
+        // ========================================
 
         ImprovementResult result =
                 ImprovementResult.fromEvaluation(
@@ -248,6 +365,10 @@ public class ClassWeightingExperiment {
 
         result.setFeatureCount(featureCount);
         results.add(result);
+
+        // ========================================
+        // PRINT EXPERIMENT RESULT
+        // ========================================
 
         System.out.println();
         System.out.println("--- " + methodName + " ---");
@@ -279,6 +400,10 @@ public class ClassWeightingExperiment {
         );
     }
 
+    // ============================================
+    // FORMAT METRIC VALUES
+    // ============================================
+
     private static String formatScore(double value) {
 
         if (!Double.isFinite(value)) {
@@ -292,26 +417,42 @@ public class ClassWeightingExperiment {
         );
     }
 
+    // ============================================
+    // EXPORT STEP 3 RESULTS TO CSV
+    // ============================================
+
     private static void saveResultsToCsv(
             List<ImprovementResult> results
     ) throws Exception {
 
         Path outputFile = Path.of(OUTPUT_PATH);
 
+        // Create results directory if needed.
         Files.createDirectories(
                 outputFile.getParent()
         );
 
         StringBuilder csv = new StringBuilder();
 
-        csv.append(ImprovementResult.csvHeader())
-                .append(System.lineSeparator());
+        // Write CSV header.
+        csv.append(
+                ImprovementResult.csvHeader()
+        ).append(
+                System.lineSeparator()
+        );
 
+        // Write experiment results.
         for (ImprovementResult result : results) {
-            csv.append(result.toCsvRow())
-                    .append(System.lineSeparator());
+
+            csv.append(
+                    result.toCsvRow()
+            ).append(
+                    System.lineSeparator()
+            );
         }
 
+        // Save complete results.
+        // Existing CSV is replaced by the new one.
         Files.writeString(
                 outputFile,
                 csv.toString(),
@@ -319,15 +460,9 @@ public class ClassWeightingExperiment {
         );
 
         System.out.println();
-        System.out.println(
-                "================================"
-        );
-        System.out.println(
-                "CLASS WEIGHTING RESULTS EXPORTED"
-        );
-        System.out.println(
-                "================================"
-        );
+        System.out.println("================================");
+        System.out.println("CLASS WEIGHTING RESULTS EXPORTED");
+        System.out.println("================================");
 
         System.out.println(
                 "File: " + outputFile.toAbsolutePath()

@@ -1,3 +1,4 @@
+
 package heartdisease.ModelImprovement;
 
 import java.nio.charset.StandardCharsets;
@@ -8,6 +9,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
+// Classification B 
+import heartdisease.ClassificationB.NaiveBayesClassifier;
+import heartdisease.ClassificationB.SimpleLogisticClassifier;
+
+// Weka
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
@@ -18,6 +24,10 @@ import weka.core.Instances;
 import weka.core.converters.ConverterUtils.DataSource;
 
 public class CombinedImprovementExperiment {
+
+    // ============================================
+    // STEP 3: EXPERIMENT CONFIGURATION
+    // ============================================
 
     private static final String DATA_PATH =
             "data/processed/heart_disease.arff";
@@ -34,18 +44,28 @@ public class CombinedImprovementExperiment {
     private static final int[] TOP_K = {10, 15};
     private static final int[] YES_WEIGHTS = {4, 8};
 
+    // ============================================
+    // MAIN METHOD
+    // ============================================
+
     public static void main(String[] args) throws Exception {
 
-        List<ImprovementResult> results = new ArrayList<>();
+        List<ImprovementResult> results =
+                new ArrayList<>();
+
+        // ========================================
+        // STEP 1: LOAD DATASET
+        // ========================================
 
         Instances data = DataSource.read(DATA_PATH);
 
-        if (data == null) {
+        if (data == null || data.numInstances() == 0) {
             throw new IllegalStateException(
                     "Cannot load dataset: " + DATA_PATH
             );
         }
 
+        // Check target attribute.
         if (data.attribute(TARGET) == null) {
             throw new IllegalStateException(
                     "Target attribute not found: " + TARGET
@@ -56,6 +76,7 @@ public class CombinedImprovementExperiment {
                 data.attribute(TARGET).index()
         );
 
+        // Validate binary classification.
         if (!data.classAttribute().isNominal()
                 || data.classAttribute().numValues() != 2) {
             throw new IllegalStateException(
@@ -75,29 +96,49 @@ public class CombinedImprovementExperiment {
             );
         }
 
-        // Reproduce Step 2 train/test split.
+        // ========================================
+        // STEP 2: PREPARE TRAINING DATA
+        // ========================================
+
+        // Reproduce the Step 2 train/test split.
         data.randomize(new Random(RANDOM_SEED));
         data.stratify(5);
 
         Instances trainData = data.trainCV(5, 0);
 
+        // IMPORTANT:
         // The held-out test set is not used
         // during Step 3 configuration selection.
+
+        // ========================================
+        // STEP 3: PRINT EXPERIMENT INFORMATION
+        // ========================================
 
         System.out.println("================================");
         System.out.println("STEP 3 - COMBINED MODEL IMPROVEMENT");
         System.out.println("================================");
 
         System.out.println(
-                "Training instances: " + trainData.numInstances()
+                "Training instances: "
+                        + trainData.numInstances()
         );
 
-        System.out.println("CV folds: " + CV_FOLDS);
+        System.out.println(
+                "CV folds: " + CV_FOLDS
+        );
 
         System.out.println(
                 "Original features: "
                         + (trainData.numAttributes() - 1)
         );
+
+        System.out.println(
+                "Total classifiers: 5"
+        );
+
+        // ========================================
+        // STEP 4: J48 EXPERIMENTS
+        // ========================================
 
         J48 j48 = new J48();
 
@@ -109,6 +150,10 @@ public class CombinedImprovementExperiment {
                 yesIndex,
                 results
         );
+
+        // ========================================
+        // STEP 5: ONER EXPERIMENTS
+        // ========================================
 
         OneR oneR = new OneR();
         oneR.setMinBucketSize(6);
@@ -122,6 +167,10 @@ public class CombinedImprovementExperiment {
                 results
         );
 
+        // ========================================
+        // STEP 6: RANDOM FOREST EXPERIMENTS
+        // ========================================
+
         RandomForest randomForest = new RandomForest();
         randomForest.setNumIterations(100);
         randomForest.setSeed(RANDOM_SEED);
@@ -134,6 +183,46 @@ public class CombinedImprovementExperiment {
                 yesIndex,
                 results
         );
+
+        // ========================================
+        // STEP 7: NAIVE BAYES EXPERIMENTS
+        // ========================================
+
+        NaiveBayesClassifier naiveBayes =
+                new NaiveBayesClassifier();
+
+        // Use Chau's original Weka classifier.
+        // Do not train it before cross-validation.
+        compareConfigurations(
+                "Naive Bayes",
+                naiveBayes.getClassifier(),
+                trainData,
+                noIndex,
+                yesIndex,
+                results
+        );
+
+        // ========================================
+        // STEP 8: SIMPLE LOGISTIC EXPERIMENTS
+        // ========================================
+
+        SimpleLogisticClassifier simpleLogistic =
+                new SimpleLogisticClassifier();
+
+        // Keep the original Step 2 configuration.
+        // Training occurs inside each CV fold.
+        compareConfigurations(
+                "SimpleLogistic",
+                simpleLogistic.getClassifier(),
+                trainData,
+                noIndex,
+                yesIndex,
+                results
+        );
+
+        // ========================================
+        // STEP 9: EXPORT EXPERIMENT RESULTS
+        // ========================================
 
         saveResults(results);
 
@@ -151,6 +240,10 @@ public class CombinedImprovementExperiment {
                 "Results saved to: " + OUTPUT_PATH
         );
     }
+
+    // ============================================
+    // COMPARE IMPROVEMENT CONFIGURATIONS
+    // ============================================
 
     private static void compareConfigurations(
             String modelName,
@@ -170,7 +263,7 @@ public class CombinedImprovementExperiment {
         System.out.println("================================");
 
         // ========================================
-        // 1. BASELINE
+        // EXPERIMENT 0: BASELINE
         // ========================================
 
         evaluateConfiguration(
@@ -184,18 +277,24 @@ public class CombinedImprovementExperiment {
         );
 
         // ========================================
-        // 2. FEATURE SELECTION ONLY
+        // EXPERIMENTS 1-2: FEATURE SELECTION ONLY
         // ========================================
 
         for (int k : TOP_K) {
 
             if (k > originalFeatures) {
+                System.out.println(
+                        "Skipping InfoGain Top " + k
+                                + ": too many features."
+                );
                 continue;
             }
 
             Classifier selectedModel =
                     FeatureSelectionPipeline.createInfoGainModel(
-                            AbstractClassifier.makeCopy(baseClassifier),
+                            AbstractClassifier.makeCopy(
+                                    baseClassifier
+                            ),
                             k
                     );
 
@@ -211,14 +310,16 @@ public class CombinedImprovementExperiment {
         }
 
         // ========================================
-        // 3. CLASS WEIGHTING ONLY
+        // EXPERIMENTS 3-4: CLASS WEIGHTING ONLY
         // ========================================
 
         for (int weight : YES_WEIGHTS) {
 
             Classifier weightedModel =
                     ClassWeightingConfig.createWeightedClassifier(
-                            AbstractClassifier.makeCopy(baseClassifier),
+                            AbstractClassifier.makeCopy(
+                                    baseClassifier
+                            ),
                             noIndex,
                             yesIndex,
                             weight
@@ -236,7 +337,7 @@ public class CombinedImprovementExperiment {
         }
 
         // ========================================
-        // 4. COMBINED IMPROVEMENT
+        // EXPERIMENTS 5-8: COMBINED IMPROVEMENT
         // ========================================
 
         for (int k : TOP_K) {
@@ -247,20 +348,29 @@ public class CombinedImprovementExperiment {
 
             for (int weight : YES_WEIGHTS) {
 
-                // Build the weighted classifier.
+                // Create a fresh weighted classifier.
                 Classifier weightedModel =
                         ClassWeightingConfig.createWeightedClassifier(
-                                AbstractClassifier.makeCopy(baseClassifier),
+                                AbstractClassifier.makeCopy(
+                                        baseClassifier
+                                ),
                                 noIndex,
                                 yesIndex,
                                 weight
                         );
 
                 // Feature Selection is the outer pipeline.
-                // It selects attributes using training-fold data.
                 //
-                // The inner classifier then applies class
-                // weights to its training-fold data.
+                // InfoGain selects features from the
+                // training portion of each CV fold.
+                //
+                // The inner weighted classifier then
+                // increases the training weight of
+                // instances belonging to class Yes.
+                //
+                // Validation instances are not used
+                // to fit the feature selection filter
+                // or to apply training weights.
                 Classifier combinedModel =
                         FeatureSelectionPipeline.createInfoGainModel(
                                 weightedModel,
@@ -281,6 +391,10 @@ public class CombinedImprovementExperiment {
         }
     }
 
+    // ============================================
+    // RUN CROSS-VALIDATION EXPERIMENT
+    // ============================================
+
     private static void evaluateConfiguration(
             String modelName,
             String methodName,
@@ -291,14 +405,24 @@ public class CombinedImprovementExperiment {
             List<ImprovementResult> results
     ) throws Exception {
 
-        Evaluation evaluation = new Evaluation(trainData);
+        Evaluation evaluation =
+                new Evaluation(trainData);
 
+        // Stratified 10-fold cross-validation.
+        //
+        // Every experiment uses the same random seed.
+        // Feature selection and class weighting are
+        // performed during model training.
         evaluation.crossValidateModel(
                 model,
                 trainData,
                 CV_FOLDS,
                 new Random(RANDOM_SEED)
         );
+
+        // ========================================
+        // STORE EXPERIMENT RESULT
+        // ========================================
 
         ImprovementResult result =
                 ImprovementResult.fromEvaluation(
@@ -310,6 +434,10 @@ public class CombinedImprovementExperiment {
 
         result.setFeatureCount(featureCount);
         results.add(result);
+
+        // ========================================
+        // PRINT EXPERIMENT RESULT
+        // ========================================
 
         System.out.println();
         System.out.println("--- " + methodName + " ---");
@@ -341,6 +469,10 @@ public class CombinedImprovementExperiment {
         );
     }
 
+    // ============================================
+    // FORMAT METRIC VALUES
+    // ============================================
+
     private static String formatScore(double value) {
 
         if (!Double.isFinite(value)) {
@@ -354,26 +486,42 @@ public class CombinedImprovementExperiment {
         );
     }
 
+    // ============================================
+    // EXPORT RESULTS TO CSV
+    // ============================================
+
     private static void saveResults(
             List<ImprovementResult> results
     ) throws Exception {
 
         Path outputFile = Path.of(OUTPUT_PATH);
 
+        // Create results directory if necessary.
         Files.createDirectories(
                 outputFile.getParent()
         );
 
         StringBuilder csv = new StringBuilder();
 
-        csv.append(ImprovementResult.csvHeader())
-                .append(System.lineSeparator());
+        // Write CSV header.
+        csv.append(
+                ImprovementResult.csvHeader()
+        ).append(
+                System.lineSeparator()
+        );
 
+        // Write all experiment results.
         for (ImprovementResult result : results) {
-            csv.append(result.toCsvRow())
-                    .append(System.lineSeparator());
+
+            csv.append(
+                    result.toCsvRow()
+            ).append(
+                    System.lineSeparator()
+            );
         }
 
+        // Save the complete experiment results.
+        // This overwrites the previous CSV.
         Files.writeString(
                 outputFile,
                 csv.toString(),
@@ -382,7 +530,9 @@ public class CombinedImprovementExperiment {
 
         System.out.println();
         System.out.println("================================");
-        System.out.println("COMBINED IMPROVEMENT RESULTS EXPORTED");
+        System.out.println(
+                "COMBINED IMPROVEMENT RESULTS EXPORTED"
+        );
         System.out.println("================================");
 
         System.out.println(
