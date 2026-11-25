@@ -1,0 +1,61 @@
+Model,Method,TrainingMs10Fold,PredictionMs10Fold,MeanPredictionMs
+"J48","Baseline - All Features",1006.487015,3.564688,0.000445586
+"J48","CFS + BestFirst",235.215374,1.812966,0.000226621
+"J48","InfoGain Top 5",146.752841,1.540981,0.000192623
+"J48","InfoGain Top 10",176.747275,1.618257,0.000202282
+"J48","InfoGain Top 15",558.876331,2.021780,0.000252723
+"J48","Class Weighting YesWeight=2",1064.165280,3.572237,0.000446530
+"J48","Class Weighting YesWeight=4",1489.901203,3.501432,0.000437679
+"J48","Class Weighting YesWeight=8",1963.578572,3.595444,0.000449431
+"J48","InfoGain Top 10 + YesWeight=4",300.274486,3.589482,0.000448685
+"J48","InfoGain Top 10 + YesWeight=8",279.677052,3.606235,0.000450779
+"J48","InfoGain Top 15 + YesWeight=4",904.391332,4.210315,0.000526289
+"J48","InfoGain Top 15 + YesWeight=8",1075.131234,4.419825,0.000552478
+"OneR","Baseline - All Features",127.900027,2.644638,0.000330580
+"OneR","CFS + BestFirst",135.070291,1.431385,0.000178923
+"OneR","InfoGain Top 5",125.144201,1.690911,0.000211364
+"OneR","InfoGain Top 10",102.545526,1.156694,0.000144587
+"OneR","InfoGain Top 15",140.189029,1.350045,0.000168756
+"OneR","Class Weighting YesWeight=2",96.269298,1.447035,0.000180879
+"OneR","Class Weighting YesWeight=4",82.906879,1.371191,0.000171399
+"OneR","Class Weighting YesWeight=8",77.765058,1.227642,0.000153455
+"OneR","InfoGain Top 10 + YesWeight=4",105.879379,1.150374,0.000143797
+"OneR","InfoGain Top 10 + YesWeight=8",112.346374,1.434191,0.000179274
+"OneR","InfoGain Top 15 + YesWeight=4",137.279559,2.002385,0.000250298
+"OneR","InfoGain Top 15 + YesWeight=8",132.730027,1.662469,0.000207809
+"RandomForest","Baseline - All Features",12139.007853,327.050370,0.040881296
+"RandomForest","CFS + BestFirst",715.827581,40.988654,0.005123582
+"RandomForest","InfoGain Top 5",1086.809493,118.531945,0.014816493
+"RandomForest","InfoGain Top 10",3829.556475,334.207415,0.041775927
+"RandomForest","InfoGain Top 15",6355.766782,398.390230,0.049798779
+"RandomForest","Class Weighting YesWeight=2",12141.655649,423.697646,0.052962206
+"RandomForest","Class Weighting YesWeight=4",11220.497282,457.499621,0.057187453
+"RandomForest","Class Weighting YesWeight=8",9563.517884,410.185551,0.051273194
+"RandomForest","InfoGain Top 10 + YesWeight=4",3953.543753,407.153832,0.050894229
+"RandomForest","InfoGain Top 10 + YesWeight=8",3509.759022,447.245796,0.055905725
+"RandomForest","InfoGain Top 15 + YesWeight=4",6108.710594,460.820937,0.057602617
+"RandomForest","InfoGain Top 15 + YesWeight=8",5262.813406,482.135188,0.060266899
+"NaiveBayes","Baseline - All Features",92.388207,23.773396,0.002971675
+"NaiveBayes","CFS + BestFirst",134.203784,2.952842,0.000369105
+"NaiveBayes","InfoGain Top 5",94.497428,2.836993,0.000354624
+"NaiveBayes","InfoGain Top 10",94.847440,4.584114,0.000573014
+"NaiveBayes","InfoGain Top 15",119.942212,9.100783,0.001137598
+"NaiveBayes","Class Weighting YesWeight=2",65.792106,13.550029,0.001693754
+"NaiveBayes","Class Weighting YesWeight=4",73.692584,17.096985,0.002137123
+"NaiveBayes","Class Weighting YesWeight=8",66.061637,13.463484,0.001682936
+"NaiveBayes","InfoGain Top 10 + YesWeight=4",98.291283,4.886237,0.000610780
+"NaiveBayes","InfoGain Top 10 + YesWeight=8",98.037729,4.656732,0.000582092
+"NaiveBayes","InfoGain Top 15 + YesWeight=4",122.658587,9.520694,0.001190087
+"NaiveBayes","InfoGain Top 15 + YesWeight=8",120.617002,8.987027,0.001123378
+"SimpleLogistic","Baseline - All Features",2812.764559,10.263982,0.001282998
+"SimpleLogistic","CFS + BestFirst",1839.614835,3.067528,0.000383441
+"SimpleLogistic","InfoGain Top 5",1910.621683,3.395731,0.000424466
+"SimpleLogistic","InfoGain Top 10",2227.956648,3.917187,0.000489648
+"SimpleLogistic","InfoGain Top 15",2450.888913,4.299914,0.000537489
+"SimpleLogistic","Class Weighting YesWeight=2",2582.102940,4.385656,0.000548207
+"SimpleLogistic","Class Weighting YesWeight=4",2947.522055,4.479486,0.000559936
+"SimpleLogistic","Class Weighting YesWeight=8",2633.860890,4.439339,0.000554917
+"SimpleLogistic","InfoGain Top 10 + YesWeight=4",2516.510174,4.093330,0.000511666
+"SimpleLogistic","InfoGain Top 10 + YesWeight=8",2336.429291,4.066661,0.000508333
+"SimpleLogistic","InfoGain Top 15 + YesWeight=4",2690.071710,4.480996,0.000560125
+"SimpleLogistic","InfoGain Top 15 + YesWeight=8",2557.864749,4.480588,0.000560074
