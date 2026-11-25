@@ -25,9 +25,11 @@ __pycache__/
 
 # Generated models
 models/
+!models/*.model
 
 # Experiment results
 results/
+!results/*.csv
 
 # Logs
 *.log
